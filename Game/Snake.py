@@ -11,33 +11,63 @@ class Snake:
         pygame.init()
         self.window=pygame.display.set_mode((WIDTH,HEIGHT))
         self.running = True
+        self.win=False
         self.grid= [[EMPTY for _ in range(ROWS)] for _ in range(COLS)]
         self.state = "playing"
-        self.snakeCells=deque(maxlen=1)
+        self.snakeCells=deque(maxlen=5)
         self.snakeCells.append((random.randint(0,COLS-1),random.randint(0,ROWS-1)))
+        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
+        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
+        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
+        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
+        snakeX=random.randint(0,COLS-1)
+        snakeY=random.randint(0,ROWS-1)
+        self.grid[snakeX][snakeY]=SNAKEHEAD
+        self.snakeCells.append((snakeX,snakeY))
         self.score=0
         self.font = pygame.font.SysFont('arial',int(cell_size*2))
+        appleX=random.randint(0,COLS-1)
+        appleY=random.randint(0,ROWS-1)
+        self.applePos=(appleX,appleY)
+        self.grid[appleX][appleY]=APPLE
+        self.moveVector=[1,0]
+
+#main game functions
+    #starts new game
+    def start_new_game(self):
+        self.running = True
+        self.grid= [[EMPTY for _ in range(ROWS)] for _ in range(COLS)]
+        self.state = "playing"
+        self.snakeCells=deque(maxlen=5)
+        self.snakeCells.append((random.randint(0,COLS-1),random.randint(0,ROWS-1)))
+        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
+        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
+        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
+        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
+        self.score=0
         self.applePos=(
             random.randint(0,COLS-1),
             random.randint(0,ROWS-1),
         )
         self.moveVector=[1,0]
 
-#main game functions
     #main loop of the game
     def run(self):
         while self.running:
             self.events()
             self.update()
             self.draw()
+            pygame.time.delay(50)
+            
         pygame.quit()
         sys.exit()
     
     #1 step of the game for the Ai
     def step(self):
-        self.events(self.state)
-        self.update(self.state)
-        self.draw(self.state)
+        self.draw()
+        self.update()
+        self.events()
+        # pygame.time.delay(50)
 
     
     #handles all kinds of ingame events
@@ -91,12 +121,14 @@ class Snake:
         )
         if(new_snake_cell==self.applePos):
             new_snake=deque(maxlen=len(self.snakeCells)+1)
+            self.score+=5
             for cell in self.snakeCells:
                 new_snake.append(cell)
             self.snakeCells=new_snake
             if(len(self.snakeCells)>=ROWS*COLS):
                 print('game over you win!')
                 self.running=False
+                self.win=True
             self.applePos=(
                 random.randint(0,COLS-1),
                 random.randint(0,ROWS-1),
@@ -115,7 +147,6 @@ class Snake:
         self.snakeCells.append(new_snake_cell)   
      
         self.updateGrid()
-        pygame.time.delay(50)
 
 #update helpers
     def updateGrid(self): 
@@ -157,6 +188,10 @@ class Snake:
     def textToScreen(self,window,text, pos, colour=BLACK):
         font = self.font.render(text,False,colour)
         window.blit(font,pos)  
+
+#AI helpers
+    def valid(self, action):
+        actions = {1:[]}
 
 #general Helpers
     # proper printing function

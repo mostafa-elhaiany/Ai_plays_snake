@@ -1,5 +1,7 @@
 from Game.Snake import *
-
+from Solvers.QLearning import *
 
 snake = Snake()
-snake.run()
+# snake.run()
+agent = QL(snake)
+agent.solve()
