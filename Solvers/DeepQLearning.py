@@ -19,16 +19,11 @@ class DQNAgent:
         self.action_space = 4
 
         #main  get trained evert batch
-        # self.model=self.createModel()
-        self.model = keras.models.load_model('Solvers/models/target_model.h5')  
-
+        self.model=self.createModel()
 
         #target predicts every step
-        # self.targetModel= self.createModel()
-        self.targetModel=keras.models.load_model('Solvers/models/target_model.h5') 
+        self.targetModel= self.createModel()
 
-        # self.targetModel.set_weights(self.model.get_weights())
-        
         self.replayMemory= deque(maxlen=REPLAY_MEMORY_SIZE)
         
         self.targetUpdateCounter=0

@@ -1,8 +1,10 @@
 from Game.Snake import *
 from Solvers.QLearning import *
 from Solvers.DeepQLearning import *
+
 snake = Snake()
-# snake.run()
+snake.run()
+
 # agent = QL(snake)
-agent = DQNAgent(snake)
-agent.solve()
+# agent = DQNAgent(snake)
+# agent.solve()
