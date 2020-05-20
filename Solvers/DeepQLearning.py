@@ -1,12 +1,13 @@
+import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Activation, Flatten
 from collections import deque
 import numpy as np
-import random,copy,math
+import random,copy,math,time
 
-REPLAY_MEMORY_SIZE= 1000_000
+REPLAY_MEMORY_SIZE= 1000
 BATCH_SIZE= 128
-UPDATE_TARGET_EVERY=50
+UPDATE_TARGET_EVERY=10
 DISCOUNT=0.9
 class DQNAgent:
     def __init__(self,game):
@@ -18,16 +19,21 @@ class DQNAgent:
         self.action_space = 4
 
         #main  get trained evert batch
-        self.model=self.createModel()
-        
-        #target predicts every step
-        self.targetModel= self.createModel()
+        # self.model=self.createModel()
+        self.model = keras.models.load_model('Solvers/models/target_model.h5')  
 
-        self.targetModel.set_weights(self.model.get_weights())
+
+        #target predicts every step
+        # self.targetModel= self.createModel()
+        self.targetModel=keras.models.load_model('Solvers/models/target_model.h5') 
+
+        # self.targetModel.set_weights(self.model.get_weights())
         
         self.replayMemory= deque(maxlen=REPLAY_MEMORY_SIZE)
         
         self.targetUpdateCounter=0
+
+        self.lastAte=0
 
         
  
@@ -70,7 +76,7 @@ class DQNAgent:
     #getting actions
     def getQs(self, observation, epsilon):
         if(np.random.random()>epsilon):
-            return self.model.predict(observation.reshape((1,*self.observation_space)))[0]
+            return self.targetModel.predict(observation.reshape((1,*self.observation_space)))[0]
         else:
             rand =random.randint(1,self.action_space-1)
             return rand
@@ -112,14 +118,17 @@ class DQNAgent:
             
             
         if self.targetUpdateCounter>UPDATE_TARGET_EVERY:
+            print('target updated!')
             self.targetModel.set_weights(self.model.get_weights())
             self.targetUpdateCounter=0
+            self.targetModel.save('Solvers/models/target_model.h5')
 
 
     def reset(self):
         self.game.start_new_game()
         self.game.step()
         self.game.step()
+        self.lastAte=0    
         return self.get_observation()
     
     def get_observation(self):
@@ -148,13 +157,13 @@ class DQNAgent:
         return np.array(observations)
 
             
-
     def step(self,action):
         actions = {0:[0,-1],1:[0,1],2:[-1,0],3:[1,0]}
                 #up,down,left,right
         prev_score=self.game.score
         distance_before = math.sqrt((self.game.snakeCells[-1][0]-self.game.applePos[0])**2+(self.game.snakeCells[-1][1]-self.game.applePos[1])**2)
         self.game.moveVector = actions[action]
+        self.game.step()
         distance_after = math.sqrt((self.game.snakeCells[-1][0]-self.game.applePos[0])**2+(self.game.snakeCells[-1][1]-self.game.applePos[1])**2)
         new_score = self.game.score
         done = not self.game.running
@@ -167,26 +176,33 @@ class DQNAgent:
         else:
             if(new_score>prev_score):
                 reward = 100
+                self.lastAte=0
             else:
                 if(self.game.score<50):
-                    if(distance_after>distance_before):
+                    if(distance_after<distance_before):
                         reward = 100-self.game.score
                     else:
                         reward = -40
+                    
+                    if(self.lastAte >=160):
+                        reward = -40
+                        self.lastAte =0
+                        self.game.running=False
+                        done = True
                 else:
                     reward = 0
 
-        new_observation=self.get_observation()
-        self.game.step()
-        return new_observation,reward,done
 
+        new_observation=self.get_observation()
+        self.lastAte+=1
+        return new_observation,reward,done
     
     def solve(self):
-        total_games=100_000
+        total_games=150_000
         
-        epsilon=0.7
+        epsilon=0.5
         start_decay=0
-        end_decay=total_games//5
+        end_decay=total_games//4
         
         epsilon_decay_value=epsilon/(end_decay-start_decay)
 
@@ -205,12 +221,14 @@ class DQNAgent:
                 self.updateReplyMemory(
                     (observation, action, reward, new_observation, done)
                 )
-    
+
                 observation = new_observation
                 self.train(done)    
             if(end_decay>=episode >=start_decay):
                 epsilon *=epsilon_decay_value
+            print('score for this episode is ',self.game.score)
         
+        self.model.save('Solvers/models/DQN.h5')
         self.final_sol()
     
     def final_sol(self):
@@ -222,4 +240,4 @@ class DQNAgent:
             time.sleep(0.1)
             if(done):
                 break
-        self.model.save('Solvers/models/DQN.h5')
+    

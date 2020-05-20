@@ -1,7 +1,6 @@
-import pygame,random,copy,sys
+import pygame,random,copy,sys, math
 from collections import deque
 from Game.sittings import *
-
 EMPTY=0
 SNAKE=1
 SNAKEHEAD=2
