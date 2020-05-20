@@ -31,6 +31,7 @@ class Snake:
         self.applePos=(appleX,appleY)
         self.grid[appleX][appleY]=APPLE
         self.moveVector=[1,0]
+        self.updateGrid()
 
 #main game functions
     #starts new game
@@ -38,11 +39,8 @@ class Snake:
         self.running = True
         self.grid= [[EMPTY for _ in range(ROWS)] for _ in range(COLS)]
         self.state = "playing"
-        self.snakeCells=deque(maxlen=5)
+        self.snakeCells=deque(maxlen=2)
         self.snakeCells.append((random.randint(0,COLS-1),random.randint(0,ROWS-1)))
-        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
-        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
-        self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
         self.snakeCells.append((self.snakeCells[-1][0]+1,self.snakeCells[-1][1]))
         self.score=0
         self.applePos=(
@@ -50,6 +48,7 @@ class Snake:
             random.randint(0,ROWS-1),
         )
         self.moveVector=[1,0]
+        self.updateGrid()
 
     #main loop of the game
     def run(self):
@@ -152,15 +151,18 @@ class Snake:
     def updateGrid(self): 
         self.grid= [[EMPTY for _ in range(ROWS)] for _ in range(COLS)]
         self.grid[self.applePos[0]][self.applePos[1]]=APPLE
-        for snakePos in self.snakeCells:
+        for i in range(len(self.snakeCells)-1):
             try:
+                snakePos= self.snakeCells[i]
                 self.grid[snakePos[0]][snakePos[1]]=SNAKE
             except:
                 pass
+                # print('out of bounds')
         try:
             self.grid[self.snakeCells[-1][0]][self.snakeCells[-1][1]]=SNAKEHEAD
         except:
             pass
+            # print('out of bounds')
 
 #draw helpers
     #draws the snake grid
